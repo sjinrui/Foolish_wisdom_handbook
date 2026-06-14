@@ -1,0 +1,14 @@
+{
+  "item.foolish_wisdom_handbook.foolish_wisdom_book": "Book of Foolish Wisdom",
+  "screen.foolish_wisdom_handbook.foolish_wisdom_book": "Book of Foolish Wisdom",
+  "screen.foolish_wisdom_handbook.summary": "Uneaten: %s / %s  Eaten: %s",
+  "screen.foolish_wisdom_handbook.chapter_summary": "Missing: %s / %s  Collected: %s",
+  "screen.foolish_wisdom_handbook.aom_missing": "Could not read gourmet records",
+  "screen.foolish_wisdom_handbook.source_missing": "Could not read %s records",
+  "screen.foolish_wisdom_handbook.no_uneaten_foods": "No uneaten foods remain",
+  "screen.foolish_wisdom_handbook.collection_not_started": "The story is waiting to begin",
+  "screen.foolish_wisdom_handbook.no_missing_entries": "%s is complete",
+  "screen.foolish_wisdom_handbook.search": "Search",
+  "key.categories.foolish_wisdom_handbook": "Foolish Wisdom Handbook",
+  "key.foolish_wisdom_handbook.open_book": "Open Book of Foolish Wisdom"
+}

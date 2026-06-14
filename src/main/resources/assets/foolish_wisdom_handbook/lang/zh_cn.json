@@ -1,0 +1,14 @@
+{
+  "item.foolish_wisdom_handbook.foolish_wisdom_book": "\u5927\u611a\u82e5\u667a\u4e4b\u4e66",
+  "screen.foolish_wisdom_handbook.foolish_wisdom_book": "\u5927\u611a\u82e5\u667a\u4e4b\u4e66",
+  "screen.foolish_wisdom_handbook.summary": "\u672a\u98df\u7528\uff1a%s / %s  \u5df2\u98df\u7528\uff1a%s",
+  "screen.foolish_wisdom_handbook.chapter_summary": "\u672a\u6536\u96c6\uff1a%s / %s  \u5df2\u6536\u96c6\uff1a%s",
+  "screen.foolish_wisdom_handbook.aom_missing": "\u672a\u80fd\u8bfb\u53d6\u7f8e\u98df\u5bb6\u8bb0\u5f55",
+  "screen.foolish_wisdom_handbook.source_missing": "\u672a\u80fd\u8bfb\u53d6%s\u8bb0\u5f55",
+  "screen.foolish_wisdom_handbook.no_uneaten_foods": "\u5df2\u7ecf\u6ca1\u6709\u672a\u98df\u7528\u7684\u98df\u7269\u4e86",
+  "screen.foolish_wisdom_handbook.collection_not_started": "\u6545\u4e8b\u4e9f\u5f85\u5f00\u59cb",
+  "screen.foolish_wisdom_handbook.no_missing_entries": "%s\u5df2\u5168\u90e8\u70b9\u4eae",
+  "screen.foolish_wisdom_handbook.search": "\u641c\u7d22",
+  "key.categories.foolish_wisdom_handbook": "\u5927\u611a\u82e5\u667a\u624b\u518c",
+  "key.foolish_wisdom_handbook.open_book": "\u6253\u5f00\u5927\u611a\u82e5\u667a\u4e4b\u4e66"
+}

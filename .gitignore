@@ -1,0 +1,46 @@
+# Gradle and build outputs
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local release notes and helper install scripts
+docs/
+build-and-install.cmd
+build-and-install.ps1
+
+# Minecraft/Forge run directories and generated runtime data
+run/
+runs/
+logs/
+crash-reports/
+saves/
+
+# Compiled artifacts
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.ear
+
+# Local IDE metadata
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+bin/
+
+# Logs and temporary files
+*.log
+*.log.gz
+*.tmp
+*.temp
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
