@@ -1,6 +1,6 @@
 # Foolish Wisdom Handbook
 
-Foolish Wisdom Handbook 是一个用于 The Fool 整合包的 Minecraft Forge 1.20.1 模组。它提供一本游戏内收集手册，用于查看食物、收藏、进度与相关条目的收集信息。
+大愚若智是一个用于愚者整合包的模组。它提供一本游戏内收集手册，用于查看食物、收藏、进度与相关条目的收集信息。
 
 ## 环境
 
