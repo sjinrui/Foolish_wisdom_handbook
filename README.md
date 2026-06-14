@@ -42,6 +42,12 @@ build/libs/foolish_wisdom_handbook-1.0.jar
 
 Git 会忽略构建输出、Gradle 缓存、运行目录、日志和本地 IDE 文件。
 
+## 许可证
+
+本项目使用 MIT License 开源。
+
+你可以使用、复制、修改、合并、发布、分发、再授权和商业使用本项目，但需要保留原作者版权声明和许可证文本。完整条款见 [LICENSE](LICENSE)。
+
 ## English
 
 Foolish Wisdom Handbook is a Minecraft Forge 1.20.1 mod for The Fool modpack. It provides an in-game handbook for collection and progress information.
@@ -85,3 +91,9 @@ build/libs/foolish_wisdom_handbook-1.0.jar
 ```
 
 Build outputs, Gradle caches, run directories, logs, and local IDE files are intentionally ignored by Git.
+
+## License
+
+This project is licensed under the MIT License.
+
+You may use, copy, modify, merge, publish, distribute, sublicense, and use this project commercially, provided that the copyright notice and license text are preserved. See [LICENSE](LICENSE) for details.
