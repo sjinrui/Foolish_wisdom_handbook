@@ -211,6 +211,8 @@ tasks.named('check').configure {
 }
 
 jar {
+    from('LICENSE')
+
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,

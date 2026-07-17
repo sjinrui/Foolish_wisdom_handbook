@@ -8,7 +8,7 @@
 - Forge：47.4.0
 - Java 工具链：17
 - 模组 ID：`foolish_wisdom_handbook`
-- 当前版本：`1.0`
+- 当前版本：`1.1`
 
 ## 构建
 
@@ -34,19 +34,19 @@
 build/libs/foolish_wisdom_handbook-<version>.jar
 ```
 
-对于版本 `1.0`，预期产物名称为：
+对于版本 `1.1`，预期产物名称为：
 
 ```text
-build/libs/foolish_wisdom_handbook-1.0.jar
+build/libs/foolish_wisdom_handbook-1.1.jar
 ```
 
 Git 会忽略构建输出、Gradle 缓存、运行目录、日志和本地 IDE 文件。
 
 ## 许可证
 
-本项目使用 MIT License 开源。
+本项目使用 GNU General Public License v3.0 or later（GPL-3.0-or-later）开源。
 
-你可以使用、复制、修改、合并、发布、分发、再授权和商业使用本项目，但需要保留原作者版权声明和许可证文本。完整条款见 [LICENSE](LICENSE)。
+允许使用、修改、整合、移植和再发布本项目；分发修改版或二进制版本时，必须按 GPL 提供对应源码并继续以 GPL 兼容方式发布。完整条款见 [LICENSE](LICENSE)。
 
 ## English
 
@@ -58,7 +58,7 @@ Foolish Wisdom Handbook is a Minecraft Forge 1.20.1 mod for The Fool modpack. It
 - Forge: 47.4.0
 - Java toolchain: 17
 - Mod id: `foolish_wisdom_handbook`
-- Current version: `1.0`
+- Current version: `1.1`
 
 ## Build
 
@@ -84,16 +84,16 @@ The built mod jar is generated under:
 build/libs/foolish_wisdom_handbook-<version>.jar
 ```
 
-For version `1.0`, the expected artifact name is:
+For version `1.1`, the expected artifact name is:
 
 ```text
-build/libs/foolish_wisdom_handbook-1.0.jar
+build/libs/foolish_wisdom_handbook-1.1.jar
 ```
 
 Build outputs, Gradle caches, run directories, logs, and local IDE files are intentionally ignored by Git.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later).
 
-You may use, copy, modify, merge, publish, distribute, sublicense, and use this project commercially, provided that the copyright notice and license text are preserved. See [LICENSE](LICENSE) for details.
+You may use, modify, integrate, port, and redistribute this project. When distributing modified or binary versions, you must provide the corresponding source code and keep the work under GPL-compatible terms. See [LICENSE](LICENSE) for details.

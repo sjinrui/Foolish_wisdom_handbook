@@ -20,7 +20,7 @@ public final class TheFoolFoodBook {
     }
 
     private void addCreativeTabItems(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES && ModItems.FOOD_WISDOM_BOOK.isPresent()) {
             event.accept(ModItems.FOOD_WISDOM_BOOK.get());
         }
     }
