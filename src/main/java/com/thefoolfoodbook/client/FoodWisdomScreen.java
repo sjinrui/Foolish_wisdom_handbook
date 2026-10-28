@@ -25,6 +25,8 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +49,13 @@ public final class FoodWisdomScreen extends Screen {
     private static final int MISSING_CELL_BACKGROUND = 0x36D84A4A;
     private static final int SCROLLBAR_TRACK = 0x55284F5B;
     private static final int SCROLLBAR_THUMB = 0xBB78D8FF;
+    private static final int NEW_CELL_FRAME = 0xFFFFD23F;
+    private static final int NEW_CELL_BACKGROUND = 0x55FFD23F;
+    private static final int NEW_BADGE_COLOR = 0xFFFFC21A;
+    private static final int ACK_BUTTON_BACKGROUND = 0x99FFB02E;
+    private static final int TOOL_BUTTON_BACKGROUND = 0x443E6A78;
+    private static final int SORT_BUTTON_WIDTH = 32;
+    private static final int ACK_BUTTON_WIDTH = 38;
     private static final int HEADER_HEIGHT = 18;
     private static final int ITEM_CELL_SIZE = 28;
     private static final int ENTITY_CELL_SIZE = 56;
@@ -54,14 +63,17 @@ public final class FoodWisdomScreen extends Screen {
     private static long handCursor;
     private static String rememberedChapterId = "food";
     private static CollectionDisplayMode rememberedDisplayMode = CollectionDisplayMode.MISSING;
+    private static CollectionSortMode rememberedSortMode = CollectionSortMode.DEFAULT;
     private static boolean rememberedCatFoxMenuExpanded;
     private static String rememberedSearchText = "";
     private static final Map<String, Integer> rememberedScrollByChapter = new HashMap<>();
     private static final Map<String, CollectionGrouping> rememberedGroupingByChapter = new HashMap<>();
 
     private LazyCollectionBook book = new LazyCollectionBook(List.of());
+    private LazyCollectionBook probeBook = new LazyCollectionBook(List.of());
     private String selectedChapterId = rememberedChapterId;
     private CollectionDisplayMode displayMode = rememberedDisplayMode;
+    private CollectionSortMode sortMode = rememberedSortMode;
     private final Map<String, CollectionGrouping> groupingByChapter = new HashMap<>();
     private final Set<String> collapsedGroups = new HashSet<>();
     private final Set<String> bookmarkedStackKeys = new HashSet<>();
@@ -86,6 +98,14 @@ public final class FoodWisdomScreen extends Screen {
     private int displayToggleTop;
     private int displayToggleRight;
     private int displayToggleBottom;
+    private int sortToggleLeft;
+    private int sortToggleTop;
+    private int sortToggleRight;
+    private int sortToggleBottom;
+    private int ackToggleLeft;
+    private int ackToggleTop;
+    private int ackToggleRight;
+    private int ackToggleBottom;
     private double lastMouseX;
     private double lastMouseY;
     private boolean handCursorActive;
@@ -106,10 +126,12 @@ public final class FoodWisdomScreen extends Screen {
         displayMode = rememberedDisplayMode;
         selectedChapterId = rememberedChapterId;
         this.book = createBook();
+        this.probeBook = createProbeBook();
         if (!hasChapter(selectedChapterId)) {
             selectedChapterId = book.firstChapterId();
         }
         book.load(selectedChapterId);
+        rememberChapter(selectedChapterId);
         refreshBookmarks();
         entityCache.clear();
         updateLayout();
@@ -146,6 +168,8 @@ public final class FoodWisdomScreen extends Screen {
 
         renderChapterMenu(graphics);
         renderGroupingButton(graphics, chapter);
+        renderSortButton(graphics);
+        renderAckButton(graphics);
         renderDisplayButton(graphics);
         graphics.enableScissor(listLeft, listTop, listRight, listBottom);
         renderGroups(graphics, displayedChapter);
@@ -161,11 +185,24 @@ public final class FoodWisdomScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
         HoveredTarget hovered = hoveredTarget(mouseX, mouseY);
         if (hovered instanceof HoveredTarget.Entry entry) {
-            graphics.renderTooltip(font, Component.literal(entry.entry().displayName()), mouseX, mouseY);
+            Component name = Component.literal(entry.entry().displayName());
+            if (CollectionMemoryStore.get().isNew(selectedChapterId, entry.entry().id())) {
+                name = Component.literal(entry.entry().displayName())
+                        .append(Component.literal(" "))
+                        .append(Component.translatable("screen.foolish_wisdom_handbook.newly_collected").withStyle(ChatFormatting.GOLD));
+            }
+            graphics.renderTooltip(font, name, mouseX, mouseY);
         } else if (hovered instanceof HoveredTarget.GroupingButton) {
             graphics.renderTooltip(font, Component.literal(groupingTooltip(chapter)), mouseX, mouseY);
+        } else if (hovered instanceof HoveredTarget.SortButton) {
+            graphics.renderTooltip(font, sortTooltip(), mouseX, mouseY);
+        } else if (hovered instanceof HoveredTarget.AckButton) {
+            graphics.renderTooltip(
+                    font,
+                    Component.translatable("screen.foolish_wisdom_handbook.ack_tip", CollectionMemoryStore.get().newCount()),
+                    mouseX, mouseY);
         } else if (hovered instanceof HoveredTarget.DisplayButton) {
-            graphics.renderTooltip(font, Component.literal("\u5207\u6362\u663e\u793a\u5185\u5bb9"), mouseX, mouseY);
+            graphics.renderTooltip(font, Component.translatable("screen.foolish_wisdom_handbook.display_tip"), mouseX, mouseY);
         }
     }
 
@@ -198,6 +235,7 @@ public final class FoodWisdomScreen extends Screen {
             saveCurrentScroll();
             selectedChapterId = chapter.id();
             book.load(selectedChapterId);
+            rememberChapter(selectedChapterId);
             displayedChapterCache.invalidate();
             refreshBookmarks();
             scroll = rememberedScrollByChapter.getOrDefault(selectedChapterId, 0);
@@ -216,6 +254,15 @@ public final class FoodWisdomScreen extends Screen {
         }
         if (button == 0 && hovered instanceof HoveredTarget.GroupingButton) {
             toggleGrouping(selectedChapterId);
+            return true;
+        }
+        if (button == 0 && hovered instanceof HoveredTarget.SortButton) {
+            toggleSortMode();
+            return true;
+        }
+        if (button == 0 && hovered instanceof HoveredTarget.AckButton) {
+            CollectionMemoryStore.get().acknowledge();
+            clampScroll();
             return true;
         }
         if (button == 0 && hovered instanceof HoveredTarget.Entry entry && entry.entry().hasItemIcon() && entry.entry().recipeOpenable()) {
@@ -300,7 +347,9 @@ public final class FoodWisdomScreen extends Screen {
     public void refreshFromServerSnapshot() {
         saveCurrentScroll();
         this.book = createBook();
+        this.probeBook = createProbeBook();
         book.load(selectedChapterId);
+        rememberChapter(selectedChapterId);
         displayedChapterCache.invalidate();
         refreshBookmarks();
         entityCache.clear();
@@ -365,6 +414,24 @@ public final class FoodWisdomScreen extends Screen {
         graphics.drawCenteredString(font, displayMode.label(), (displayToggleLeft + displayToggleRight) / 2, displayToggleTop + 5, TITLE_COLOR);
     }
 
+    private void renderSortButton(GuiGraphics graphics) {
+        fillRoundedRect(graphics, sortToggleLeft, sortToggleTop, sortToggleRight, sortToggleBottom, TOOL_BUTTON_BACKGROUND);
+        int frameColor = sortMode.byTime() ? NEW_CELL_FRAME : CELL_FRAME_DIM;
+        drawRoundedFrame(graphics, sortToggleLeft, sortToggleTop, sortToggleRight, sortToggleBottom, frameColor);
+        graphics.drawCenteredString(font, sortMode.label(), (sortToggleLeft + sortToggleRight) / 2, sortToggleTop + 5, TITLE_COLOR);
+    }
+
+    private void renderAckButton(GuiGraphics graphics) {
+        int newCount = CollectionMemoryStore.get().newCount();
+        if (newCount <= 0) {
+            return;
+        }
+        fillRoundedRect(graphics, ackToggleLeft, ackToggleTop, ackToggleRight, ackToggleBottom, ACK_BUTTON_BACKGROUND);
+        drawRoundedFrame(graphics, ackToggleLeft, ackToggleTop, ackToggleRight, ackToggleBottom, NEW_CELL_FRAME);
+        Component label = Component.translatable("screen.foolish_wisdom_handbook.new_badge", newCount);
+        graphics.drawCenteredString(font, label, (ackToggleLeft + ackToggleRight) / 2, ackToggleTop + 5, 0xFF1E1400);
+    }
+
     private String groupingTooltip(CollectionChapter chapter) {
         if ("biome_treat".equals(chapter.id())) {
             return groupingFor(chapter.id()) == CollectionGrouping.DEFAULT
@@ -383,6 +450,7 @@ public final class FoodWisdomScreen extends Screen {
                 : (current == CollectionGrouping.DEFAULT ? CollectionGrouping.MOD : CollectionGrouping.DEFAULT);
         groupingByChapter.put(chapterId, next);
         book.invalidate(chapterId);
+        probeBook.invalidate(chapterId);
         book.load(chapterId);
         displayedChapterCache.invalidate();
         scroll = 0;
@@ -409,6 +477,43 @@ public final class FoodWisdomScreen extends Screen {
 
     private LazyCollectionBook createBook() {
         return CollectionBookScanner.createLazyBook(this::groupingFor, displayMode);
+    }
+
+    private LazyCollectionBook createProbeBook() {
+        return CollectionBookScanner.createLazyBook(this::groupingFor, CollectionDisplayMode.ALL);
+    }
+
+    private void toggleSortMode() {
+        sortMode = sortMode.next();
+        rememberedSortMode = sortMode;
+        displayedChapterCache.invalidate();
+        scroll = 0;
+        clampScroll();
+    }
+
+    private Component sortTooltip() {
+        return switch (sortMode) {
+            case DEFAULT -> Component.translatable("screen.foolish_wisdom_handbook.sort_tip_default");
+            case TIME_NEWEST -> Component.translatable("screen.foolish_wisdom_handbook.sort_tip_newest");
+            case TIME_OLDEST -> Component.translatable("screen.foolish_wisdom_handbook.sort_tip_oldest");
+        };
+    }
+
+    /**
+     * 用全量（ALL）章节视图，把该章节当前已收集的条目 id 记录到本地记忆中。
+     * 必须使用全量章节，因为 MISSING 显示模式下已收集条目会被过滤掉。
+     */
+    private void rememberChapter(String chapterId) {
+        CollectionChapter all = probeBook.load(chapterId);
+        List<String> collectedIds = new ArrayList<>();
+        for (CollectionGroup group : all.groups()) {
+            for (CollectionEntry entry : group.entries()) {
+                if (entry.collected()) {
+                    collectedIds.add(entry.id());
+                }
+            }
+        }
+        CollectionMemoryStore.get().recordChapter(chapterId, collectedIds);
     }
 
     private static boolean supportsGrouping(String chapterId) {
@@ -457,13 +562,17 @@ public final class FoodWisdomScreen extends Screen {
             if (cellY + cellSize < listTop || cellY > listBottom) {
                 continue;
             }
-            renderEntryCell(graphics, entry, cellX, cellY, cellSize);
+            renderEntryCell(graphics, chapter, entry, cellX, cellY, cellSize);
         }
     }
 
-    private void renderEntryCell(GuiGraphics graphics, CollectionEntry entry, int x, int y, int cellSize) {
+    private void renderEntryCell(GuiGraphics graphics, CollectionChapter chapter, CollectionEntry entry, int x, int y, int cellSize) {
         boolean bookmarked = entry.matchesBookmarkKeys(bookmarkedStackKeys);
-        if (displayMode == CollectionDisplayMode.ALL) {
+        boolean isNew = CollectionMemoryStore.get().isNew(chapter.id(), entry.id());
+        if (isNew) {
+            fillRoundedRect(graphics, x + 1, y + 1, x + cellSize - 1, y + cellSize - 1, NEW_CELL_BACKGROUND);
+            drawRoundedFrame(graphics, x + 1, y + 1, x + cellSize - 1, y + cellSize - 1, NEW_CELL_FRAME);
+        } else if (displayMode == CollectionDisplayMode.ALL) {
             fillRoundedRect(graphics, x + 1, y + 1, x + cellSize - 1, y + cellSize - 1, entry.collected() ? COLLECTED_CELL_BACKGROUND : MISSING_CELL_BACKGROUND);
             drawRoundedFrame(graphics, x + 1, y + 1, x + cellSize - 1, y + cellSize - 1, entry.collected() ? 0x7738C86A : 0x77D84A4A);
         } else if (bookmarked) {
@@ -477,6 +586,14 @@ public final class FoodWisdomScreen extends Screen {
             graphics.renderItem(entry.itemStack(), x + 6, y + 6);
         } else if (entry.hasEntityIcon()) {
             renderEntityIcon(graphics, entry, x, y, cellSize);
+        }
+
+        if (isNew) {
+            // 右上角金色圆点作为 NEW 角标
+            int badgeRight = x + cellSize - 3;
+            int badgeTop = y + 3;
+            graphics.fill(badgeRight - 4, badgeTop, badgeRight, badgeTop + 4, NEW_BADGE_COLOR);
+            graphics.fill(badgeRight - 3, badgeTop - 1, badgeRight - 1, badgeTop + 5, 0xFFFFE08A);
         }
     }
 
@@ -542,6 +659,17 @@ public final class FoodWisdomScreen extends Screen {
         if (mouseX >= displayToggleLeft && mouseX <= displayToggleRight
                 && mouseY >= displayToggleTop && mouseY <= displayToggleBottom) {
             return new HoveredTarget.DisplayButton();
+        }
+
+        if (mouseX >= sortToggleLeft && mouseX <= sortToggleRight
+                && mouseY >= sortToggleTop && mouseY <= sortToggleBottom) {
+            return new HoveredTarget.SortButton();
+        }
+
+        if (CollectionMemoryStore.get().newCount() > 0
+                && mouseX >= ackToggleLeft && mouseX <= ackToggleRight
+                && mouseY >= ackToggleTop && mouseY <= ackToggleBottom) {
+            return new HoveredTarget.AckButton();
         }
 
         if (supportsGrouping(selectedChapterId)
@@ -634,6 +762,14 @@ public final class FoodWisdomScreen extends Screen {
         groupingToggleLeft = groupingToggleRight - 44;
         groupingToggleTop = panelTop + 24;
         groupingToggleBottom = groupingToggleTop + 18;
+        sortToggleRight = groupingToggleLeft - 4;
+        sortToggleLeft = sortToggleRight - SORT_BUTTON_WIDTH;
+        sortToggleTop = panelTop + 24;
+        sortToggleBottom = sortToggleTop + 18;
+        ackToggleRight = sortToggleLeft - 4;
+        ackToggleLeft = ackToggleRight - ACK_BUTTON_WIDTH;
+        ackToggleTop = panelTop + 24;
+        ackToggleBottom = ackToggleTop + 18;
         displayToggleLeft = menuLeft + 3;
         displayToggleRight = menuRight - 5;
         displayToggleBottom = panelBottom - 12;
@@ -647,7 +783,11 @@ public final class FoodWisdomScreen extends Screen {
     }
 
     private int searchBoxWidth() {
-        return Math.max(70, Math.min(128, groupingToggleLeft - 8 - listLeft));
+        int rightBound = sortToggleLeft - 8;
+        if (CollectionMemoryStore.get().newCount() > 0) {
+            rightBound = ackToggleLeft - 8;
+        }
+        return Math.max(60, Math.min(128, rightBound - listLeft));
     }
 
     private int maxScroll(CollectionChapter chapter) {
@@ -755,7 +895,89 @@ public final class FoodWisdomScreen extends Screen {
 
     private CollectionChapter displayedChapter(CollectionChapter chapter) {
         String query = searchBox == null ? rememberedSearchText : searchBox.getValue();
-        return displayedChapterCache.get(chapter, query);
+        CollectionChapter withNew = mergeNewEntries(chapter);
+        CollectionChapter filtered = displayedChapterCache.get(withNew, query);
+        return sortChapter(filtered);
+    }
+
+    /**
+     * 把当前章节里“尚未确认的新收集”条目合并进来，即使在 MISSING（未收集）显示模式下
+     * 也会显示这些刚收集的条目（金色高亮），避免物品一收集就从列表消失、玩家看不到提醒。
+     * 确认后这些条目不再是 new，自然回到当前显示模式的正常过滤结果。
+     */
+    private CollectionChapter mergeNewEntries(CollectionChapter chapter) {
+        CollectionMemoryStore memory = CollectionMemoryStore.get();
+        if (memory.newCount() == 0) {
+            return chapter;
+        }
+        Set<String> existingIds = new HashSet<>();
+        for (CollectionGroup group : chapter.groups()) {
+            for (CollectionEntry entry : group.entries()) {
+                existingIds.add(entry.id());
+            }
+        }
+        List<CollectionEntry> newEntries = new ArrayList<>();
+        CollectionChapter all = probeBook.load(chapter.id());
+        for (CollectionGroup group : all.groups()) {
+            for (CollectionEntry entry : group.entries()) {
+                if (memory.isNew(chapter.id(), entry.id()) && !existingIds.contains(entry.id())) {
+                    newEntries.add(entry);
+                }
+            }
+        }
+        if (newEntries.isEmpty()) {
+            return chapter;
+        }
+        newEntries.sort(Comparator.comparing(CollectionEntry::displayName).thenComparing(CollectionEntry::id));
+        List<CollectionGroup> groups = new ArrayList<>(chapter.groups());
+        groups.add(new CollectionGroup(
+                "__new__",
+                Component.translatable("screen.foolish_wisdom_handbook.new_group").getString(),
+                newEntries));
+        return new CollectionChapter(chapter.id(), chapter.title(), groups, chapter.totalCount(), chapter.collectedCount(), chapter.sourceAvailable());
+    }
+
+    /**
+     * 按当前排序模式对章节内每个分组的条目排序。
+     * 时间排序时，未收集（无时间戳，为 0）的条目统一排在最后；
+     * 时间相同的按名称稳定排序。
+     */
+    private CollectionChapter sortChapter(CollectionChapter chapter) {
+        if (!sortMode.byTime()) {
+            return chapter;
+        }
+        CollectionMemoryStore memory = CollectionMemoryStore.get();
+        boolean newestFirst = sortMode.newestFirst();
+        List<CollectionGroup> groups = new ArrayList<>();
+        for (CollectionGroup group : chapter.groups()) {
+            List<CollectionEntry> entries = new ArrayList<>(group.entries());
+            entries.sort((a, b) -> {
+                long ta = memory.collectTime(chapter.id(), a.id());
+                long tb = memory.collectTime(chapter.id(), b.id());
+                int cmp;
+                if (ta == tb) {
+                    cmp = a.displayName().compareToIgnoreCase(b.displayName());
+                    if (cmp == 0) {
+                        cmp = a.id().compareTo(b.id());
+                    }
+                } else {
+                    // 无时间戳（0，未收集）的条目始终排在最后
+                    if (ta == 0L) {
+                        cmp = 1;
+                    } else if (tb == 0L) {
+                        cmp = -1;
+                    } else {
+                        cmp = Long.compare(ta, tb);
+                    }
+                    if (newestFirst) {
+                        cmp = -cmp;
+                    }
+                }
+                return cmp;
+            });
+            groups.add(new CollectionGroup(group.id(), group.title(), entries));
+        }
+        return new CollectionChapter(chapter.id(), chapter.title(), groups, chapter.totalCount(), chapter.collectedCount(), chapter.sourceAvailable());
     }
 
     private boolean canRemoveBiomeTreat(CollectionEntry entry) {
@@ -818,8 +1040,9 @@ public final class FoodWisdomScreen extends Screen {
         return Math.max(0, visibleMenuRows().size() * 24 - menuHeight);
     }
 
-    private void clampMenuScroll() {
+    private int clampMenuScroll() {
         menuScroll = Math.max(0, Math.min(maxMenuScroll(), menuScroll));
+        return 0;
     }
 
     private static void drawBorder(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
@@ -860,6 +1083,12 @@ public final class FoodWisdomScreen extends Screen {
         }
 
         record GroupingButton() implements HoveredTarget {
+        }
+
+        record SortButton() implements HoveredTarget {
+        }
+
+        record AckButton() implements HoveredTarget {
         }
 
         record DisplayButton() implements HoveredTarget {
