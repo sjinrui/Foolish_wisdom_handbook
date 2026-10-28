@@ -9,6 +9,17 @@
   "screen.foolish_wisdom_handbook.collection_not_started": "The story is waiting to begin",
   "screen.foolish_wisdom_handbook.no_missing_entries": "%s is complete",
   "screen.foolish_wisdom_handbook.search": "Search",
+  "screen.foolish_wisdom_handbook.display_tip": "Toggle displayed content",
+  "screen.foolish_wisdom_handbook.sort_default": "Sort",
+  "screen.foolish_wisdom_handbook.sort_newest": "Newest",
+  "screen.foolish_wisdom_handbook.sort_oldest": "Oldest",
+  "screen.foolish_wisdom_handbook.sort_tip_default": "Current: default order. Click to sort by acquisition time (newest first)",
+  "screen.foolish_wisdom_handbook.sort_tip_newest": "Current: by acquisition time (newest first). Click to sort oldest first",
+  "screen.foolish_wisdom_handbook.sort_tip_oldest": "Current: by acquisition time (oldest first). Click to restore default order",
+  "screen.foolish_wisdom_handbook.new_badge": "NEW %s",
+  "screen.foolish_wisdom_handbook.new_group": "Newly Collected",
+  "screen.foolish_wisdom_handbook.newly_collected": "(New)",
+  "screen.foolish_wisdom_handbook.ack_tip": "Newly collected %s item(s). Click to acknowledge and clear highlights",
   "key.categories.foolish_wisdom_handbook": "Foolish Wisdom Handbook",
   "key.foolish_wisdom_handbook.open_book": "Open Book of Foolish Wisdom"
 }
